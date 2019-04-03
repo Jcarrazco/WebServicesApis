@@ -12,6 +12,8 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml.Serialization;
 using Academy.Apis.Data;
+using Academy.Apis.UI.WinClient.localhost;
+using Newtonsoft.Json;
 
 namespace Academy.Apis.UI.WinClient
 {
@@ -27,7 +29,7 @@ namespace Academy.Apis.UI.WinClient
             localhost.UserAdmin _userAdminProxy = new localhost.UserAdmin();
 
             localhost.UserDO _userInfo = new localhost.UserDO()
-            {
+            { 
                Name =  this.textBox1.Text,
                LastName = this.textBox2.Text,
                Email = this.textBox3.Text,
@@ -147,11 +149,6 @@ namespace Academy.Apis.UI.WinClient
 
         }
 
-        private void tmiOpenJson_Click(object sender, EventArgs e)
-        {
-
-        }
-
         private void tmiOpenBinary_Click(object sender, EventArgs e)
         {
             using (OpenFileDialog _fod = new OpenFileDialog()
@@ -225,11 +222,107 @@ namespace Academy.Apis.UI.WinClient
                     {
                         stream.Close();
                     }
-                    
+
+                    showFilecontentB(filename);
+
 
                 }
 
             }
+        }
+
+        private void Btn_SqlDirect_Click(object sender, EventArgs e)
+        {
+            UserAdmin _userAdminProxy = new UserAdmin();
+            UserDO _userInfo = new UserDO()
+            {
+                Name = this.textBox1.Text,
+                LastName = this.textBox2.Text,
+                Email = this.textBox3.Text,
+                NickName = this.textBox4.Text
+            };
+            _userAdminProxy.CreateUser(_userInfo);
+
+        }
+
+        private void tmiSaveJson_Click(object sender, EventArgs e)
+        {
+            using (SaveFileDialog _fsd = new SaveFileDialog()
+            {
+                AddExtension = true,
+                Filter = "*.json|*.json",
+                CheckPathExists = true
+            })
+            {
+
+                if (DialogResult.OK.Equals(_fsd.ShowDialog(this)))
+                {
+                    Academy.Apis.Data.DataObjects.UserDO _userInfo = new Academy.Apis.Data.DataObjects.UserDO()
+                    {
+                        Name = this.textBox1.Text,
+                        LastName = this.textBox2.Text,
+                        Email = this.textBox3.Text,
+                        NickName = this.textBox4.Text
+                    };
+
+                    string filename = _fsd.FileName;
+                    //---------------File save text
+                    File.WriteAllText(filename, JsonConvert.SerializeObject(_userInfo));
+
+                    // serialize JSON directly to a file
+                    using (StreamWriter file = File.CreateText(filename))
+                    {
+                        JsonSerializer serializer = new JsonSerializer();
+                        serializer.Serialize(file, _userInfo);
+                    }
+                    //-----------------------------------
+                    showFilecontent(filename);
+                }
+
+
+            }
+        }
+
+        private void tmiOpenJson_Click(object sender, EventArgs e)
+        {
+            using (OpenFileDialog _fod = new OpenFileDialog()
+            {
+                AddExtension = true,
+                Filter = "*.json|*.json",
+                CheckPathExists = true,
+                CheckFileExists = true
+            })
+
+            {
+                if (DialogResult.OK.Equals(_fod.ShowDialog(this)))
+                {
+                    string filename = _fod.FileName;
+                    /*// read file into a string and deserialize JSON to a type
+                    Academy.Apis.Data.DataObjects.UserDO _userInfo = 
+                        JsonConvert.DeserializeObject<Academy.Apis.Data.DataObjects.UserDO>
+                        (File.ReadAllText(filename));
+                        */
+                    // deserialize JSON directly from a file
+                    using (StreamReader file = File.OpenText(filename))
+                    {
+                        JsonSerializer serializer = new JsonSerializer();
+                        Academy.Apis.Data.DataObjects.UserDO _userInfo = 
+                            (Academy.Apis.Data.DataObjects.UserDO)serializer.Deserialize
+                            (file, typeof(Academy.Apis.Data.DataObjects.UserDO));
+                    
+                    if (null != _userInfo)
+                    {
+                        this.textBox1.Text = _userInfo.Name;
+                        this.textBox2.Text = _userInfo.LastName;
+                        this.textBox3.Text = _userInfo.Email;
+                        this.textBox4.Text = _userInfo.NickName;
+                    }
+
+                    showFilecontent(filename);
+                    }
+                }
+            }
+
         }
     }
 }
